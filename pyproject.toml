@@ -1,0 +1,16 @@
+[tool.black]
+line-length = 110
+target-version = ['py38']
+
+[tool.isort]
+profile = "black"
+line_length = 110
+src_paths = ['py']
+atomic = true
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+python_files = [
+    "test_*.py",
+    "*Tests.py",
+    ]

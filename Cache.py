@@ -2,6 +2,7 @@ import pickle
 
 CACHE = {}
 
+
 def saveCache(filename):
     if not filename:
         return
@@ -10,6 +11,7 @@ def saveCache(filename):
             pickle.dump(CACHE, f)
     except:
         pass
+
 
 def loadCache(filename):
     if not filename:

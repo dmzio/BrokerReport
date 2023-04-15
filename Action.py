@@ -1,7 +1,9 @@
-from enum import Enum
-from sortedcontainers import SortedList
 from collections import defaultdict
 from decimal import Decimal
+from enum import Enum
+
+from sortedcontainers import SortedList
+
 
 class EActionType(Enum):
     SEND = 1
@@ -15,15 +17,16 @@ class EActionType(Enum):
     PAYMENT = 9
     INCOME = 10
 
+
 class Action:
-    def __init__(self, time, actionType, count, asset, percent = None):
+    def __init__(self, time, actionType, count, asset, percent=None):
         self._time = time
         self._actionType = actionType
         self._count = count
         self._asset = asset
         self._percent = percent
         self._parent = None
-        self._actions = SortedList(key=lambda x : x.time)
+        self._actions = SortedList(key=lambda x: x.time)
         self._taxCalculations = []
 
     @property
@@ -64,7 +67,7 @@ class Action:
 
     @property
     def tax(self):
-        result = defaultdict(lambda : [Decimal(0), Decimal(0)])
+        result = defaultdict(lambda: [Decimal(0), Decimal(0)])
         for action, value in self._taxCalculations:
             if value >= Decimal(0):
                 result[action.time.year][1] += value
@@ -74,7 +77,7 @@ class Action:
 
     @property
     def flat_tax(self):
-        result = defaultdict(lambda : [Decimal(0), Decimal(0)])
+        result = defaultdict(lambda: [Decimal(0), Decimal(0)])
         for x in self._actions:
             sub = x.flat_tax
             for year, value in sub.items():
@@ -92,14 +95,14 @@ class Action:
     @property
     def flat_actions(self):
         actions = []
-        stack = [ x for x in self._actions ]
+        stack = [x for x in self._actions]
         while stack:
             act = stack[0]
             actions.append(act)
             del stack[0]
-            stack += [ x for x in act.actions ]
+            stack += [x for x in act.actions]
         return actions
-    
+
     @property
     def actions(self):
         return self._actions
@@ -114,9 +117,9 @@ class Action:
 
     def addTaxCalculation(self, action, value):
         self._taxCalculations.append((action, value))
-    
-    def dump(self, prefix = ''):
-        p = '' if not self._percent else "(%s %%)" % (str(self._percent))
-        print('%s %s %s %s %s %s' % (prefix, self._time, self._actionType.name, self._count, self._asset, p))
+
+    def dump(self, prefix=""):
+        p = "" if not self._percent else "(%s %%)" % (str(self._percent))
+        print("%s %s %s %s %s %s" % (prefix, self._time, self._actionType.name, self._count, self._asset, p))
         for x in self._actions:
-            x.dump(prefix+'\t')
+            x.dump(prefix + "\t")

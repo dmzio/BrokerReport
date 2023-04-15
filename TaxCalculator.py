@@ -1,12 +1,14 @@
+from collections import defaultdict
+from copy import copy
+from decimal import Decimal
+
+import Rounding
 from Action import *
 from Asset import *
 from TaxUtils import getPLNValueDayBefore
-from decimal import Decimal
-from collections import defaultdict
-from copy import copy
-import Rounding
 
-#Tax FIFO calculator
+# Tax FIFO calculator
+
 
 class TaxCalculator:
     def __init__(self, account):
@@ -27,7 +29,11 @@ class TaxCalculator:
 
     def visitBuy(self, action):
         actions = [x for x in action.flat_actions if not x.actions]
-        data = [copy(action.count), action.count, [ (getPLNValueDayBefore(x.count, x.asset.ticker, x.time.date().isoformat()), x) for x in actions ]]
+        data = [
+            copy(action.count),
+            action.count,
+            [(getPLNValueDayBefore(x.count, x.asset.ticker, x.time.date().isoformat()), x) for x in actions],
+        ]
         self._assets[action.asset].append(data)
 
     def visitSell(self, action):
@@ -37,25 +43,29 @@ class TaxCalculator:
         while not count.is_zero():
             if not data:
                 raise Exception("Missing assets on sell (%s)" % (str(action.asset)))
-            
+
             selected = count if count <= data[0][0] else data[0][0]
             precent = selected / data[0][1]
             for pln, act in data[0][2]:
-                act.addTaxCalculation(action, pln*precent)
+                act.addTaxCalculation(action, pln * precent)
             count -= selected
             data[0][0] -= selected
             if data[0][0].is_zero():
                 del data[0]
 
         actions = [x for x in action.flat_actions if not x.actions]
-        for pln, act in [ (getPLNValueDayBefore(x.count, x.asset.ticker, x.time.date().isoformat()), x) for x in actions ]:
+        for pln, act in [
+            (getPLNValueDayBefore(x.count, x.asset.ticker, x.time.date().isoformat()), x) for x in actions
+        ]:
             act.addTaxCalculation(action, pln)
 
     def visitInstant(self, action):
         if not action.actions and type(action.asset) is not Currency:
             return
         actions = [x for x in action.flat_actions if not x.actions] if action.actions else [action]
-        for pln, act in [ (getPLNValueDayBefore(x.count, x.asset.ticker, x.time.date().isoformat()), x) for x in actions ]:
+        for pln, act in [
+            (getPLNValueDayBefore(x.count, x.asset.ticker, x.time.date().isoformat()), x) for x in actions
+        ]:
             act.addTaxCalculation(action, pln)
 
     def visitDividend(self, action):
@@ -67,22 +77,23 @@ class TaxCalculator:
 
         incomeValue = getPLNValueDayBefore(income.count, income.asset.ticker, income.time.date().isoformat())
         if not tax:
-            income.addTaxCalculation(action, incomeValue*Decimal(0.19))
+            income.addTaxCalculation(action, incomeValue * Decimal(0.19))
             return
-        
+
         if not tax[0].percent:
             return
 
-
-        tax[0].addTaxCalculation(action, getPLNValueDayBefore(tax[0].count, tax[0].asset.ticker, income.time.date().isoformat()))
-        income.addTaxCalculation(action, incomeValue*Decimal(0.19))
+        tax[0].addTaxCalculation(
+            action, getPLNValueDayBefore(tax[0].count, tax[0].asset.ticker, income.time.date().isoformat())
+        )
+        income.addTaxCalculation(action, incomeValue * Decimal(0.19))
 
     def calculate(self):
         for action in self._actions:
             if action.type == EActionType.BUY:
                 self.visitBuySell(action)
                 continue
-            
+
             if action.type == EActionType.SELL:
                 self.visitBuySell(action)
                 continue

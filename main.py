@@ -1,20 +1,29 @@
-from IngAccount import IngAccount
-from MBankAccount import MBankAccount
+import argparse
+import os
+import os.path
+
+from Cache import loadCache, saveCache
+from CustomAccount import CustomAccount
 from DifAccount import DifAccount
 from ExanteAccount import ExanteAccount
-from CustomAccount import CustomAccount
 from ExcelOutput import ExcelOutput
-from Cache import loadCache, saveCache
-
+from IngAccount import IngAccount
+from MBankAccount import MBankAccount
 from TaxCalculator import TaxCalculator
 
-import argparse, os, os.path
-
-parser = argparse.ArgumentParser(description='Makler Reports Processor')
-parser.add_argument('--cache-file', required=False, help='location of optional cache file used to reduce network usage')
-parser.add_argument('--reports-folder', required=True, help='location of folder with reports to import, folder should contain `broker/account_name` folders with required reports in it')
-parser.add_argument('--output-xls', required=True, help='output location of cumulative excel report to generate')
-parser.add_argument('-v', '--verbose', required=False, help='Shows more detailed output', action="store_true")
+parser = argparse.ArgumentParser(description="Makler Reports Processor")
+parser.add_argument(
+    "--cache-file", required=False, help="location of optional cache file used to reduce network usage"
+)
+parser.add_argument(
+    "--reports-folder",
+    required=True,
+    help="location of folder with reports to import, folder should contain `broker/account_name` folders with required reports in it",
+)
+parser.add_argument(
+    "--output-xls", required=True, help="output location of cumulative excel report to generate"
+)
+parser.add_argument("-v", "--verbose", required=False, help="Shows more detailed output", action="store_true")
 
 args = parser.parse_args()
 loadCache(args.cache_file)
@@ -26,12 +35,11 @@ for broker in os.listdir(args.reports_folder):
         continue
 
     for account in os.listdir(os.path.join(args.reports_folder, broker)):
-
         directory = os.path.join(args.reports_folder, broker, account)
         if not os.path.isdir(directory):
             continue
-        
-        if 'ING' == broker:
+
+        if "ING" == broker:
             try:
                 accounts.append(IngAccount(account, directory))
                 print(" - imported %s/%s" % (broker, account), flush=True)
@@ -40,7 +48,7 @@ for broker in os.listdir(args.reports_folder):
                 print(" - failed to import %s/%s - %s" % (broker, account, e), flush=True)
                 raise e
 
-        if 'MBANK' == broker:
+        if "MBANK" == broker:
             try:
                 accounts.append(MBankAccount(account, directory))
                 print(" - imported %s/%s" % (broker, account), flush=True)
@@ -48,8 +56,8 @@ for broker in os.listdir(args.reports_folder):
             except Exception as e:
                 print(" - failed to import %s/%s - %s" % (broker, account, e), flush=True)
                 raise e
-        
-        if 'DIF' == broker:
+
+        if "DIF" == broker:
             try:
                 accounts.append(DifAccount(account, directory))
                 print(" - imported %s/%s" % (broker, account), flush=True)
@@ -57,8 +65,8 @@ for broker in os.listdir(args.reports_folder):
             except Exception as e:
                 print(" - failed to import %s/%s - %s" % (broker, account, e), flush=True)
                 raise e
-        
-        if 'EXANTE' == broker:
+
+        if "EXANTE" == broker:
             try:
                 accounts.append(ExanteAccount(account, directory))
                 print(" - imported %s/%s" % (broker, account), flush=True)
@@ -66,8 +74,8 @@ for broker in os.listdir(args.reports_folder):
             except Exception as e:
                 print(" - failed to import %s/%s - %s" % (broker, account, e), flush=True)
                 raise e
-        
-        if 'CUSTOM' == broker:
+
+        if "CUSTOM" == broker:
             try:
                 accounts.append(CustomAccount(account, directory))
                 print(" - imported %s/%s" % (broker, account), flush=True)

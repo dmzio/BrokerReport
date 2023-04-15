@@ -1,10 +1,12 @@
-from Account import Account, ETaxType
-from ImportUtils import getExcel
-from Action import Action, EActionType
-from decimal import Decimal
-from datetime import datetime
 import os
+from datetime import datetime
+from decimal import Decimal
+
 import xlrd
+from Account import Account, ETaxType
+from Action import Action, EActionType
+from ImportUtils import getExcel
+
 
 class CustomAccount(Account):
     def __init__(self, name, folder):
@@ -14,10 +16,10 @@ class CustomAccount(Account):
 
     def _import(self, folder):
         self.__import(folder)
-    
+
     def __import(self, folder):
         for name in os.listdir(folder):
-            if not name.endswith('.xlsx'):
+            if not name.endswith(".xlsx"):
                 continue
 
             def getValue(x):
@@ -35,8 +37,8 @@ class CustomAccount(Account):
                 asset = self.currency(row[1].value)
                 price_currency = self.currency(row[5].value) if row[5].value else None
                 if not asset and price_currency:
-                    name = row[1].value.split(':', 1)[1] if ':' in row[1].value else row[1].value
-                    ext = row[1].value.split(':', 1)[0] if ':' in row[1].value else None
+                    name = row[1].value.split(":", 1)[1] if ":" in row[1].value else row[1].value
+                    ext = row[1].value.split(":", 1)[0] if ":" in row[1].value else None
                     asset = self.stock(ticker=name, exchange=ext, currency=row[5].value)
 
                 if not asset:
@@ -46,38 +48,32 @@ class CustomAccount(Account):
                 price = getValue(row[4].value)
                 fee = getValue(row[6].value)
                 fee_currency = self.currency(row[7].value) if row[7].value else None
-                
+
                 if row[2].value == "Transfer":
-                    main = Action(d,
-                                  EActionType.RECEIVE if count > Decimal(0) else EActionType.SEND,
-                                  count,
-                                  asset)
+                    main = Action(
+                        d, EActionType.RECEIVE if count > Decimal(0) else EActionType.SEND, count, asset
+                    )
                     if not fee.is_zero() and fee_currency:
-                        main.addAction(Action(d,
-                                              EActionType.FEE,
-                                              fee,
-                                              fee_currency))
+                        main.addAction(Action(d, EActionType.FEE, fee, fee_currency))
                     self._add(main)
                     continue
 
                 if row[2].value == "Buy" or row[2].value == "Sell":
-                    main = Action(d,
-                                  EActionType.BUY if row[2].value == "Buy" else EActionType.SELL,
-                                  count,
-                                  asset)
-                    sub = Action(d,
-                                 EActionType.PAYMENT if row[2].value == "Buy" else EActionType.INCOME,
-                                 price * (Decimal(-1) if row[2].value == "Buy" else Decimal(1)),
-                                 price_currency)
+                    main = Action(
+                        d, EActionType.BUY if row[2].value == "Buy" else EActionType.SELL, count, asset
+                    )
+                    sub = Action(
+                        d,
+                        EActionType.PAYMENT if row[2].value == "Buy" else EActionType.INCOME,
+                        price * (Decimal(-1) if row[2].value == "Buy" else Decimal(1)),
+                        price_currency,
+                    )
                     main.addAction(sub)
 
                     if not fee.is_zero() and fee_currency:
-                        main.addAction(Action(d,
-                                              EActionType.FEE,
-                                              fee,
-                                              fee_currency))
+                        main.addAction(Action(d, EActionType.FEE, fee, fee_currency))
 
                     self._add(main)
                     continue
-                
-                raise Exception('Not supported row: %s' % (str(row[2])))
+
+                raise Exception("Not supported row: %s" % (str(row[2])))
